@@ -180,7 +180,7 @@ while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: quit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LCTRL: menu = False
+                if event.key == pygame.K_LSHIFT: menu = False
 
         font = pygame.font.SysFont("SF Pro Display", 150)
         text = font.render(f"gg", True, (255, 255, 255))
