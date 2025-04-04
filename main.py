@@ -1,4 +1,5 @@
 import pygame, random, sys
+from PIL import Image, ImageFilter
 
 pygame.init()
 pygame.font.init()
@@ -91,7 +92,7 @@ def reset():
     player_vx = 0
     player_vy = 0
 
-    snake_len = 1
+    snake_len = 40
     snake_parts = []
     parts_no_head = []
 
@@ -159,7 +160,9 @@ while True:
         clock.tick(120)
 
     menu = True
-    background = screen.copy()
+    background = pygame.image.tostring(screen, "RGBA")
+    background = Image.frombytes("RGBA", screen.get_size(), background)
+
     blur_radius = 0
 
     buttons = {
@@ -172,8 +175,11 @@ while True:
     }
 
     while menu:
-        blur_radius += 0.0625 * (20 - blur_radius)
-        blurred = blur(background, blur_radius)
+        blur_radius += 0.125 * (20 - blur_radius)
+        if round(blur_radius) < 20:
+            blurred = background.filter(ImageFilter.GaussianBlur(blur_radius))
+            blurred = pygame.image.fromstring(blurred.tobytes(), blurred.size, "RGBA")
+            blurred = pygame.transform.scale(blurred, screen.get_size())
         screen.blit(blurred, (0, 0))
         pygame.display.set_caption("snaek game :D - game over")
 
