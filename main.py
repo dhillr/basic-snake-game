@@ -92,16 +92,11 @@ def reset():
     player_vx = 0
     player_vy = 0
 
-    snake_len = 40
+    snake_len = 1
     snake_parts = []
     parts_no_head = []
 
     food_pos = (random.randint(0, 63), random.randint(0, 35))
-
-def blur(surface: pygame.Surface, radius):
-    scaled_surface = pygame.transform.smoothscale(surface, (surface.get_width() // radius, surface.get_height() // radius))
-    scaled_surface = pygame.transform.smoothscale(scaled_surface, (surface.get_width(), surface.get_height()))
-    return scaled_surface
 
 while True:
     reset()
@@ -157,11 +152,12 @@ while True:
 
         pygame.display.set_caption(f"snaek game :D - length {snake_len} - fps: {clock.get_fps():.2f}")
         pygame.display.flip()
-        clock.tick(120)
+        clock.tick(90)
 
     menu = True
-    background = pygame.image.tostring(screen, "RGBA")
-    background = Image.frombytes("RGBA", screen.get_size(), background)
+    dimensions = (screen.get_size()[0] // 2, screen.get_size()[1] // 2)
+    background = pygame.image.tostring(pygame.transform.scale(screen, dimensions), "RGB")
+    background = Image.frombytes("RGB", dimensions, background).filter(ImageFilter.EDGE_ENHANCE)
 
     blur_radius = 0
 
@@ -175,11 +171,12 @@ while True:
     }
 
     while menu:
-        blur_radius += 0.125 * (20 - blur_radius)
-        if round(blur_radius) < 20:
+        blur_radius += 0.0625 * (10 - blur_radius)
+        if round(blur_radius) < 10:
             blurred = background.filter(ImageFilter.GaussianBlur(blur_radius))
-            blurred = pygame.image.fromstring(blurred.tobytes(), blurred.size, "RGBA")
+            blurred = pygame.image.fromstring(blurred.tobytes(), blurred.size, "RGB")
             blurred = pygame.transform.scale(blurred, screen.get_size())
+
         screen.blit(blurred, (0, 0))
         pygame.display.set_caption("snaek game :D - game over")
 
