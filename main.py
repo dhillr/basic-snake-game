@@ -14,6 +14,21 @@ def quit():
 def lerp(a, b, t):
     return a + (b - a) * t
 
+spritesheet = pygame.image.load("images/spritesheet.png").convert_alpha()
+
+def get_sprites():
+    sprites = []
+    for y in range(0, 32, 8):
+        for x in range(0, 32, 8):
+            sprite = pygame.Surface((8, 8))
+            sprite.blit(spritesheet, (0, 0), (x, y, 8, 8))
+            sprite = pygame.transform.scale(sprite, (20, 20))
+            sprite.set_colorkey((0, 0, 0))
+            sprites.append(sprite)
+    return sprites
+
+sprites = get_sprites()
+
 class Button: 
     def __init__(self, y, text: str, on_click=None):
         self.y = y
@@ -44,40 +59,90 @@ class Button:
         screen.blit(text_surface, text_rect)
 
 class Tilemap:
-    def __init__(self, tiles=[]):
+    def __init__(self, tiles=[], mirror_map=[]):
         self.tiles = tiles
+        self.mirror_map = mirror_map
 
     @staticmethod
     def new(w, h):
-        return Tilemap(["0" * w for _ in range(h)])
+        return Tilemap(["0" * w for _ in range(h)], ["0" * w for _ in range(h)])
     
     def clear(self):
         self.tiles = ["0" * len(self.tiles[0]) for _ in range(len(self.tiles))]
+        self.mirror_map = ["0" * len(self.tiles[0]) for _ in range(len(self.tiles))]
     
-    def set_tile(self, x, y, tile):
+    def set_tile(self, x, y, tile, mirror=0):
         if y < 0 or y >= len(self.tiles) or x < 0 or x >= len(self.tiles[y]):
             return False
         
         row = self.tiles[y]
+        mirror_row = self.mirror_map[y]
+
 
         for i in range(len(row)):
             if i == x:
                 row = row[:i] + str(tile) + row[i+1:]
+                mirror_row = mirror_row[:i] + str(mirror) + mirror_row[i+1:]
                 break
 
         self.tiles[y] = row
+        self.mirror_map[y] = mirror_row
         return True
 
     def draw(self, screen):
         tile_size = 20
         color_map = {
             "0": (63, 63, 63),  # empty tile (dark gray)
-            "1": (0, 255, 0),   # type 1 (snake)
-            "2": (255, 0, 0)    # type 2 (food)
+            "1": (0, 255, 0),   # type 1 (green)
+            "2": (255, 0, 0),   # type 2 (food)
+            "A": sprites[0],    # type A (straight piece horizontal)
+            "B": sprites[1],    # type B (corner piece 0)
+            "C": sprites[2],    # type C (head piece 0)
+            "D": sprites[3],    # type D (tail piece 0)
+            "E": sprites[4],    # type E (straight piece vertical)
+            "F": sprites[5],    # type F (corner piece 1)
+            "G": sprites[6],    # type G (head piece 1)
+            "H": sprites[7],    # type H (tail piece 1)
+            "I": sprites[8],    # type I (apple)
+            "J": sprites[9],    # type J (corner piece 2)
+            "K": sprites[12],   # type K (rotten apple)
+            "L": sprites[13]    # type L (corner piece 3)
+        }
+
+        mirror_map = {
+            "0": "x",
+            "1": "x",
+            "2": "x",
+            "A": "x",
+            "B": "x",
+            "C": "x",
+            "D": "x",
+            "E": "y",
+            "F": "x",
+            "G": "y",
+            "H": "y",
+            "I": "x",
+            "J": "x",
+            "K": "x",
+            "L": "x"
         }
 
         for y in range(len(self.tiles)):
             for x in range(len(self.tiles[y])):
+                if self.tiles[y][x] in color_map:
+                    if isinstance(color_map[self.tiles[y][x]], pygame.Surface):
+                        if (x + y) & 1:
+                            pygame.draw.rect(screen, color_map.get("0"), (x*tile_size, y*tile_size, tile_size, tile_size))
+                        else:
+                            pygame.draw.rect(screen, (60, 60, 60), (x*tile_size, y*tile_size, tile_size, tile_size))
+                        if self.mirror_map[y][x] == "0":
+                            screen.blit(color_map[self.tiles[y][x]], (x*tile_size, y*tile_size))
+                        else:
+                            if mirror_map[self.tiles[y][x]] == "x":
+                                screen.blit(pygame.transform.flip(color_map[self.tiles[y][x]], True, False), (x*tile_size, y*tile_size))
+                            else:
+                                screen.blit(pygame.transform.flip(color_map[self.tiles[y][x]], False, True), (x*tile_size, y*tile_size))
+                        continue
                 color = color_map.get(self.tiles[y][x], (255, 0, 255))
                 if (self.tiles[y][x] == "0" and not (x + y) & 1):
                     color = (60, 60, 60)
@@ -168,10 +233,27 @@ while True:
 
         tiles.clear()
 
-        for (sx, sy) in snake_parts: 
-            if not tiles.set_tile(sx, sy, 1): alive = False
+        for i, (sx, sy) in enumerate(snake_parts):
+            tile_pos_diff = (0, 0)
+            tile = "A"
+            mirror = 0
+            if i == 0: 
+                tile = "D"
+                if player_vy != 0: tile = "H"
+                mirror = 1 if (player_vx if tile != "H" else player_vy) > 0 else 0
+            elif i == len(snake_parts) - 1:
+                tile = "C"
+                if player_vy != 0: tile = "G"
+                mirror = 0 if (player_vx if tile != "G" else player_vy) > 0 else 1
+            else:
+                # for now
+                tile = "A"
+                if player_vy != 0: tile = "E"
+                mirror = 0 if (player_vx if tile != "E" else player_vy) > 0 else 1
 
-        tiles.set_tile(food_pos[0], food_pos[1], 2)
+            if not tiles.set_tile(sx, sy, tile, mirror=mirror): alive = False
+
+        tiles.set_tile(food_pos[0], food_pos[1], "I")
 
         tiles.draw(screen)
 
@@ -182,7 +264,7 @@ while True:
             td = get_time_data()
             pygame.image.save(screen, f"screenshots/snake_{td['year']}-{td['month']}-{td['day']}_{td['hour']}-{td['minute']}-{td['second']}.png")
             take_screenshot = False
-        
+
         clock.tick(90)
 
     menu = True
