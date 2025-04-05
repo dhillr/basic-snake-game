@@ -11,6 +11,9 @@ def quit():
     pygame.quit()
     sys.exit()
 
+def lerp(a, b, t):
+    return a + (b - a) * t
+
 class Button: 
     def __init__(self, y, text: str, on_click=None):
         self.y = y
@@ -33,9 +36,10 @@ class Button:
         else:
             self.rect_width += 0.125 * (1 - self.rect_width)
 
-        pygame.draw.rect(screen, (255, 20, 240), (50, self.y, self.rect_width, 50), 0)
+        pygame.draw.rect(screen, (255, 20, 240, int(255 * anim_t)), (50, self.y, self.rect_width, 50), 0)
         font = pygame.font.SysFont("SF Pro Display", 25)
         text_surface = font.render(self.text, True, (0, 0, 0))
+        text_surface.set_alpha(int(255 * anim_t))
         text_rect = text_surface.get_rect(center=(50 + 100, self.y + 25))
         screen.blit(text_surface, text_rect)
 
@@ -107,19 +111,19 @@ while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: quit()
             if event.type == pygame.KEYDOWN:
-                if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and player_vx != 1:
+                if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and diff != (1, 0):
                     player_vx = -1
                     player_vy = 0
                     break
-                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and player_vx != -1:
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and diff != (-1, 0):
                     player_vx = 1
                     player_vy = 0
                     break
-                elif (event.key == pygame.K_UP or event.key == pygame.K_w) and player_vy != 1:
+                elif (event.key == pygame.K_UP or event.key == pygame.K_w) and diff != (0, 1):
                     player_vx = 0
                     player_vy = -1
                     break
-                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and player_vy != -1:
+                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and diff != (0, -1):
                     player_vx = 0
                     player_vy = 1
                     break
@@ -141,6 +145,9 @@ while True:
         parts_no_head = snake_parts.copy()
         parts_no_head.pop()
 
+        if len(parts_no_head) > 0: diff = (round(player_x) - parts_no_head[len(parts_no_head)-1][0], round(player_y) - parts_no_head[len(parts_no_head)-1][1])
+        else: diff = (0, 0)
+
         tiles.clear()
 
         for (sx, sy) in snake_parts: 
@@ -160,6 +167,8 @@ while True:
     background = Image.frombytes("RGB", dimensions, background).filter(ImageFilter.EDGE_ENHANCE)
 
     blur_radius = 0
+    global anim_t
+    anim_t = 0
 
     buttons = {
         "play_again": Button(500, "play again", on_click=lambda: (
@@ -170,14 +179,18 @@ while True:
         )),
     }
 
+    death_screen = pygame.Surface((1280, 720), pygame.SRCALPHA)
     while menu:
+        
         blur_radius += 0.0625 * (10 - blur_radius)
+        anim_t += 0.0625 * (1 - anim_t)
         if round(blur_radius) < 10:
             blurred = background.filter(ImageFilter.GaussianBlur(blur_radius))
             blurred = pygame.image.fromstring(blurred.tobytes(), blurred.size, "RGB")
             blurred = pygame.transform.scale(blurred, screen.get_size())
-
+        death_screen.fill((0, 0, 0, 0))
         screen.blit(blurred, (0, 0))
+        
         pygame.display.set_caption("snaek game :D - game over")
 
         for event in pygame.event.get():
@@ -185,16 +198,20 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LSHIFT: menu = False
 
-        font = pygame.font.SysFont("SF Pro Display", 150)
+        font = pygame.font.SysFont("SF Pro Display", int(lerp(100, 150, anim_t)))
         text = font.render(f"gg", True, (255, 255, 255))
-        screen.blit(text, (50, screen.get_height() // 3))
+        text.set_alpha(int(255 * anim_t))
+        death_screen.blit(text, (lerp(death_screen.get_width() // 2, 50, lerp(0.75, 1, anim_t)), death_screen.get_height() // 3 + int(lerp(50, 0, anim_t))))
 
         font = pygame.font.SysFont("SF Pro Display", 50)
         text = font.render(f"final length: {snake_len}", True, (255, 255, 255))
-        screen.blit(text, (50, screen.get_height() // 3 + 175))
+        text.set_alpha(int(255 * anim_t))
+        death_screen.blit(text, (lerp(death_screen.get_width() // 2, 50, lerp(0.75, 1, anim_t)), death_screen.get_height() // 3 + 175 + int(lerp(25, 0, anim_t))))
 
-        buttons["play_again"].draw(screen)
-        buttons["quit"].draw(screen)
+        buttons["play_again"].draw(death_screen)
+        buttons["quit"].draw(death_screen)
+
+        screen.blit(death_screen, (0, 0))
 
         pygame.display.flip()
         clock.tick(120)
