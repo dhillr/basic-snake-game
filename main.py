@@ -198,12 +198,12 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LSHIFT: menu = False
 
-        font = pygame.font.SysFont("SF Pro Display", int(lerp(100, 150, anim_t)))
+        font = pygame.font.Font("fonts/SF-Pro-Display-Bold.otf", int(lerp(100, 150, anim_t)))
         text = font.render(f"gg", True, (255, 255, 255))
         text.set_alpha(int(255 * anim_t))
         death_screen.blit(text, (lerp(death_screen.get_width() // 2, 50, lerp(0.75, 1, anim_t)), death_screen.get_height() // 3 + int(lerp(50, 0, anim_t))))
 
-        font = pygame.font.SysFont("SF Pro Display", 50)
+        font = pygame.font.Font("fonts/SF-Pro-Display-Bold.otf", 50)
         text = font.render(f"final length: {snake_len}", True, (255, 255, 255))
         text.set_alpha(int(255 * anim_t))
         death_screen.blit(text, (lerp(death_screen.get_width() // 2, 50, lerp(0.75, 1, anim_t)), death_screen.get_height() // 3 + 175 + int(lerp(25, 0, anim_t))))
