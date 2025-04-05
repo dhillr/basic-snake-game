@@ -1,4 +1,4 @@
-import pygame, random, sys
+import pygame, random, sys, time
 from PIL import Image, ImageFilter
 
 pygame.init()
@@ -87,6 +87,22 @@ class Tilemap:
 tiles = Tilemap.new(64, 36) 
 speed = 0.15
 
+def get_time_data():
+    year = time.localtime().tm_year
+    month = time.localtime().tm_mon
+    day = time.localtime().tm_mday
+    hour = time.localtime().tm_hour
+    minute = time.localtime().tm_min
+    second = time.localtime().tm_sec
+    return {
+        "year": str(year), 
+        "month": ("0" if int(month) < 10 else "") + str(month), 
+        "day": ("0" if int(day) < 10 else "") + str(day), 
+        "hour": ("0" if int(hour) < 10 else "") + str(hour), 
+        "minute": ("0" if int(minute) < 10 else "") + str(minute), 
+        "second": ("0" if int(second) < 10 else "") + str(second)
+    }
+
 def reset():
     global player_x, player_y, player_vx, player_vy, snake_len, snake_parts, parts_no_head, food_pos
 
@@ -105,12 +121,14 @@ def reset():
 while True:
     reset()
     alive = True
+    take_screenshot = False
     while alive:
         screen.fill((0, 0, 0))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: quit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F2: take_screenshot = True
                 if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and diff != (1, 0):
                     player_vx = -1
                     player_vy = 0
@@ -159,6 +177,12 @@ while True:
 
         pygame.display.set_caption(f"snaek game :D - length {snake_len} - fps: {clock.get_fps():.2f}")
         pygame.display.flip()
+
+        if take_screenshot:
+            td = get_time_data()
+            pygame.image.save(screen, f"screenshots/snake_{td['year']}-{td['month']}-{td['day']}_{td['hour']}-{td['minute']}-{td['second']}.png")
+            take_screenshot = False
+        
         clock.tick(90)
 
     menu = True
@@ -196,6 +220,7 @@ while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: quit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F2: take_screenshot = True
                 if event.key == pygame.K_LSHIFT: menu = False
 
         font = pygame.font.Font("fonts/SF-Pro-Display-Bold.otf", int(lerp(100, 150, anim_t)))
@@ -214,4 +239,10 @@ while True:
         screen.blit(death_screen, (0, 0))
 
         pygame.display.flip()
+
+        if take_screenshot:
+            td = get_time_data()
+            pygame.image.save(screen, f"screenshots/snake_{td['year']}-{td['month']}-{td['day']}_{td['hour']}-{td['minute']}-{td['second']}.png")
+            take_screenshot = False
+
         clock.tick(120)
