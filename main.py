@@ -3,7 +3,7 @@ from PIL import Image, ImageFilter
 
 pygame.init()
 pygame.font.init()
-pygame.display.set_mode((1280, 720))
+pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
 screen = pygame.display.get_surface()
 clock = pygame.time.Clock()
 
@@ -16,13 +16,13 @@ def lerp(a, b, t):
 
 spritesheet = pygame.image.load("images/spritesheet.png").convert_alpha()
 
-def get_sprites():
+def get_sprites(size=20):
     sprites = []
     for y in range(0, 32, 8):
         for x in range(0, 32, 8):
             sprite = pygame.Surface((8, 8))
             sprite.blit(spritesheet, (0, 0), (x, y, 8, 8))
-            sprite = pygame.transform.scale(sprite, (20, 20))
+            sprite = pygame.transform.scale(sprite, (size, size))
             sprite.set_colorkey((0, 0, 0))
             sprites.append(sprite)
     return sprites
@@ -89,8 +89,7 @@ class Tilemap:
         self.mirror_map[y] = mirror_row
         return True
 
-    def draw(self, screen):
-        tile_size = 20
+    def draw(self, screen, tile_size=20):
         color_map = {
             "0": (63, 63, 63),  # empty tile (dark gray)
             "A": sprites[0],    # type A (straight piece horizontal)
@@ -198,8 +197,13 @@ while True:
     reset()
     alive = True
     take_screenshot = False
+    prev_tile_size = 0
+    tile_size = 20
     while alive:
         screen.fill((0, 0, 0))
+
+        tile_size = screen.get_width() // 64
+        speed = 0.15 * tile_size / 20
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT: quit()
@@ -309,15 +313,16 @@ while True:
                         tile = "F"
                     if corner_diff[0] == 1 and corner_diff[1] == 1:
                         tile = "B"
-                    
-
 
             if not tiles.set_tile(sx, sy, tile, mirror=mirror): alive = False
 
         tiles.set_tile(food_pos[0], food_pos[1], "I")
         tiles.set_tile(bad_food_pos[0], bad_food_pos[1], "K")
 
-        tiles.draw(screen)
+        if prev_tile_size != tile_size:
+            sprites = get_sprites(size=tile_size)
+
+        tiles.draw(screen, tile_size=tile_size)
 
         pygame.display.set_caption(f"snaek game :D - length {snake_len} - fps: {clock.get_fps():.2f}")
         pygame.display.flip()
@@ -326,6 +331,8 @@ while True:
             td = get_time_data()
             pygame.image.save(screen, f"screenshots/snake_{td['year']}-{td['month']}-{td['day']}_{td['hour']}-{td['minute']}-{td['second']}.png")
             take_screenshot = False
+
+        prev_tile_size = tile_size
 
         clock.tick(90)
 
