@@ -175,7 +175,7 @@ def get_time_data():
     }
 
 def reset():
-    global player_x, player_y, player_vx, player_vy, snake_len, snake_parts, parts_no_head, food_pos
+    global player_x, player_y, player_vx, player_vy, snake_len, snake_parts, parts_no_head, food_pos, bad_food_pos
 
     player_x = 10
     player_y = 10
@@ -188,6 +188,11 @@ def reset():
     parts_no_head = []
 
     food_pos = (random.randint(0, 63), random.randint(0, 35))
+    bad_food_pos = (-1, -1)
+
+    while food_pos == bad_food_pos:
+        food_pos = (random.randint(0, 63), random.randint(0, 35))
+
 
 while True:
     reset()
@@ -220,11 +225,20 @@ while True:
         player_x += player_vx * speed
         player_y += player_vy * speed
 
+        if snake_len >= 10 and bad_food_pos == (-1, -1):
+            bad_food_pos = (random.randint(0, 63), random.randint(0, 35))
+
         if round(player_x) == food_pos[0] and round(player_y) == food_pos[1]:
             snake_len += 1
             food_pos = (random.randint(0, 63), random.randint(0, 35))
 
-        if (round(player_x), round(player_y)) in parts_no_head: alive = False
+        if round(player_x) == bad_food_pos[0] and round(player_y) == bad_food_pos[1]:
+            snake_len -= 1
+            bad_food_pos = (random.randint(0, 63), random.randint(0, 35))
+            while food_pos == bad_food_pos:
+                food_pos = (random.randint(0, 63), random.randint(0, 35))
+
+        if (round(player_x), round(player_y)) in parts_no_head or snake_len < 1: alive = False
 
         if not (round(player_x), round(player_y)) in snake_parts:
             snake_parts.append((round(player_x), round(player_y)))
@@ -301,6 +315,7 @@ while True:
             if not tiles.set_tile(sx, sy, tile, mirror=mirror): alive = False
 
         tiles.set_tile(food_pos[0], food_pos[1], "I")
+        tiles.set_tile(bad_food_pos[0], bad_food_pos[1], "K")
 
         tiles.draw(screen)
 
