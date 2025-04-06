@@ -256,7 +256,6 @@ while True:
                     mirror = 0 if (tile_diff[0] if tile != "H" else tile_diff[1]) > 0 else 1
             elif i == len(snake_parts) - 1:
                 tile_diff = (snake_parts[i][0] - snake_parts[i-1][0], snake_parts[i][1] - snake_parts[i-1][1])
-                print(player_vx, player_vy, tile_diff)
                 if player_vx == tile_diff[0] and player_vy == tile_diff[1]:
                     tile = "C"
                     if player_vy != 0: tile = "G"
