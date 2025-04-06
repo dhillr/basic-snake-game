@@ -156,7 +156,7 @@ class Tilemap:
                 pygame.draw.rect(screen, color, (x*tile_size, y*tile_size, tile_size, tile_size))
 
 tiles = Tilemap.new(64, 36) 
-speed = 0.015
+speed = 0.15
 
 def get_time_data():
     year = time.localtime().tm_year
