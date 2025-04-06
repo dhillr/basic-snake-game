@@ -93,8 +93,6 @@ class Tilemap:
         tile_size = 20
         color_map = {
             "0": (63, 63, 63),  # empty tile (dark gray)
-            "1": (0, 255, 0),   # type 1 (green)
-            "2": (255, 0, 0),   # type 2 (food)
             "A": sprites[0],    # type A (straight piece horizontal)
             "B": sprites[1],    # type B (corner piece 0)
             "C": sprites[2],    # type C (head piece 0)
@@ -106,7 +104,11 @@ class Tilemap:
             "I": sprites[8],    # type I (apple)
             "J": sprites[9],    # type J (corner piece 2)
             "K": sprites[12],   # type K (rotten apple)
-            "L": sprites[13]    # type L (corner piece 3)
+            "L": sprites[13],   # type L (corner piece 3)
+            "M": sprites[10],   # type M (snake head turning horizontal)
+            "N": sprites[14],   # type N (snake tail turning vertical)
+            "O": sprites[11],   # type O (snake head turning horizontal mirror)
+            "P": sprites[15]    # type P (snake body turning vertical mirror)
         }
 
         mirror_map = {
@@ -124,7 +126,9 @@ class Tilemap:
             "I": "x",
             "J": "x",
             "K": "x",
-            "L": "x"
+            "L": "x",
+            "M": "x",
+            "N": "y",
         }
 
         for y in range(len(self.tiles)):
@@ -150,7 +154,7 @@ class Tilemap:
                 pygame.draw.rect(screen, color, (x*tile_size, y*tile_size, tile_size, tile_size))
 
 tiles = Tilemap.new(64, 36) 
-speed = 0.15
+speed = 0.015
 
 def get_time_data():
     year = time.localtime().tm_year
@@ -177,7 +181,7 @@ def reset():
     player_vx = 0
     player_vy = 0
 
-    snake_len = 1
+    snake_len = 10
     snake_parts = []
     parts_no_head = []
 
@@ -234,22 +238,50 @@ while True:
         tiles.clear()
 
         for i, (sx, sy) in enumerate(snake_parts):
-            tile_pos_diff = (0, 0)
+            tile_diff_prev = (0, 0)
+            tile_diff_next = (0, 0)
             tile = "A"
             mirror = 0
-            if i == 0: 
-                tile = "D"
-                if player_vy != 0: tile = "H"
-                mirror = 1 if (player_vx if tile != "H" else player_vy) > 0 else 0
+            if i == 0:
+                if len(snake_parts) == 1:
+                    tile = "C"
+                    if player_vy != 0: tile = "G"
+                    mirror = 0 if (player_vx if tile != "G" else player_vy) > 0 else 1
+                else:
+                    tile_diff = (snake_parts[0][0] - snake_parts[1][0], snake_parts[0][1] - snake_parts[1][1])
+                    tile = "D"
+                    if tile_diff[1] != 0: tile = "H"
+                    mirror = 0 if (tile_diff[0] if tile != "H" else tile_diff[1]) > 0 else 1
             elif i == len(snake_parts) - 1:
-                tile = "C"
-                if player_vy != 0: tile = "G"
-                mirror = 0 if (player_vx if tile != "G" else player_vy) > 0 else 1
+                tile_diff = (snake_parts[i][0] - snake_parts[i-1][0], snake_parts[i][1] - snake_parts[i-1][1])
+                print(player_vx, player_vy, tile_diff)
+                if player_vx == tile_diff[0] and player_vy == tile_diff[1]:
+                    tile = "C"
+                    if player_vy != 0: tile = "G"
+                    mirror = 0 if (player_vx if tile != "G" else player_vy) > 0 else 1
+                else:
+                    if len(snake_parts) > 1:
+                        if player_vy == -1: tile == "N"
+
             else:
-                # for now
-                tile = "A"
-                if player_vy != 0: tile = "E"
-                mirror = 0 if (player_vx if tile != "E" else player_vy) > 0 else 1
+                tile_diff_prev = (snake_parts[i][0] - snake_parts[i-1][0], snake_parts[i][1] - snake_parts[i-1][1])
+                tile_diff_next = (snake_parts[i+1][0] - snake_parts[i][0], snake_parts[i+1][1] - snake_parts[i][1])
+                if tile_diff_prev[0] == tile_diff_next[0] and tile_diff_prev[1] == tile_diff_next[1]:
+                    tile = "A"
+                    if tile_diff_next[1] != 0: tile = "E"
+                    mirror = 0 if (tile_diff_next[0] if tile != "E" else tile_diff_next[1]) > 0 else 1
+                else:
+                    corner_diff = (tile_diff_prev[0] - tile_diff_next[0], tile_diff_prev[1] - tile_diff_next[1])
+                    if corner_diff[0] == -1 and corner_diff[1] == -1:
+                        tile = "J"
+                    if corner_diff[0] == 1 and corner_diff[1] == -1:
+                        tile = "L"
+                    if corner_diff[0] == -1 and corner_diff[1] == 1:
+                        tile = "F"
+                    if corner_diff[0] == 1 and corner_diff[1] == 1:
+                        tile = "B"
+                    
+
 
             if not tiles.set_tile(sx, sy, tile, mirror=mirror): alive = False
 
