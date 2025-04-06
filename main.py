@@ -183,7 +183,7 @@ def reset():
     player_vx = 0
     player_vy = 0
 
-    snake_len = 10
+    snake_len = 1
     snake_parts = []
     parts_no_head = []
 
