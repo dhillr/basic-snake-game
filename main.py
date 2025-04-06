@@ -127,10 +127,10 @@ class Tilemap:
             "J": "x",
             "K": "x",
             "L": "x",
-            "M": "x",
-            "N": "y",
-            "O": "x",
-            "P": "y",
+            "M": "y",
+            "N": "x",
+            "O": "y",
+            "P": "x",
         }
 
         for y in range(len(self.tiles)):
@@ -264,16 +264,19 @@ while True:
                     if len(snake_parts) > 1:
                         if player_vy == -1: 
                             tile = "N"
+                            mirror = 0
                             if tile_diff[0] == -1: mirror = 1
-                        if player_vy == 1: 
+                        elif player_vy == 1: 
                             tile = "P"
-                            #mirror = 1
-                        if player_vx == -1:
-                            tile = "O"
-                            #mirror = 0
-                        if player_vx == 1:
+                            if tile_diff[0] == 1: mirror = 1
+                        elif player_vx == -1:
                             tile = "M"
-                            #mirror = 1
+                            mirror = 0
+                            if tile_diff[1] == -1: mirror = 1
+                        elif player_vx == 1:
+                            tile = "O"
+                            mirror = 0
+                            if tile_diff[1] == 1: mirror = 1
 
             else:
                 tile_diff_prev = (snake_parts[i][0] - snake_parts[i-1][0], snake_parts[i][1] - snake_parts[i-1][1])
