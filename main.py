@@ -197,6 +197,8 @@ while True:
     reset()
     alive = True
     take_screenshot = False
+    fullscreen = False
+    fullscreen_mode = True
     prev_tile_size = 0
     tile_size = 20
     while alive:
@@ -209,6 +211,9 @@ while True:
             if event.type == pygame.QUIT: quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F2: take_screenshot = True
+                if event.key == pygame.K_F11: 
+                    fullscreen = not fullscreen
+                    fullscreen_mode = False
                 if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and diff != (1, 0):
                     player_vx = -1
                     player_vy = 0
@@ -331,6 +336,13 @@ while True:
             td = get_time_data()
             pygame.image.save(screen, f"screenshots/snake_{td['year']}-{td['month']}-{td['day']}_{td['hour']}-{td['minute']}-{td['second']}.png")
             take_screenshot = False
+
+        if fullscreen:
+            if not fullscreen_mode: pygame.display.set_mode((1280, 720), pygame.FULLSCREEN)
+            fullscreen_mode = True
+        else:
+            if not fullscreen_mode: pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+            fullscreen_mode = True
 
         prev_tile_size = tile_size
 
